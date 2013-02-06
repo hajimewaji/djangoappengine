@@ -11,6 +11,7 @@ class CursorQueryMixin(object):
     def clone(self, *args, **kwargs):
         kwargs['_gae_start_cursor'] = getattr(self, '_gae_start_cursor', None)
         kwargs['_gae_end_cursor'] = getattr(self, '_gae_end_cursor', None)
+        kwargs['_gae_config'] = getattr(self, '_gae_config', None)
         return super(CursorQueryMixin, self).clone(*args, **kwargs)
 
 def _add_mixin(queryset):
@@ -47,6 +48,13 @@ def set_cursor(queryset, start=None, end=None):
 
     return queryset
 
+def get_config(queryset):
+    return getattr(queryset.query, '_gae_config', None)
+
+def set_config(queryset, **kwargs):
+    queryset = _add_mixin(queryset)
+    setattr(queryset.query, '_gae_config', kwargs)
+    return queryset
 
 def commit_locked(func_or_using=None, retries=None, xg=False, propagation=None):
     """
