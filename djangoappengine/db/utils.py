@@ -41,10 +41,10 @@ def set_cursor(queryset, start=None, end=None):
 
     if start is not None:
         start = Cursor.from_websafe_string(start)
-        setattr(query, '_gae_start_cursor', start)
+        setattr(queryset.query, '_gae_start_cursor', start)
     if end is not None:
         end = Cursor.from_websafe_string(end)
-        setattr(query, '_gae_end_cursor', end)
+        setattr(queryset.query, '_gae_end_cursor', end)
 
     return queryset
 
