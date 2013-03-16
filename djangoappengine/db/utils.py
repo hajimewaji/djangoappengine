@@ -1,4 +1,6 @@
+from google.appengine.api.datastore import Key
 from google.appengine.datastore.datastore_query import Cursor
+
 from django.db import models, DEFAULT_DB_ALIAS
 
 try:
@@ -55,7 +57,7 @@ def commit_locked(func_or_using=None, retries=None, xg=False):
 
             if retries:
                 option_dict['retries'] = retries
-            
+
             if xg:
                 option_dict['xg'] = True
 
@@ -69,3 +71,35 @@ def commit_locked(func_or_using=None, retries=None, xg=False):
     if callable(func_or_using):
         return inner_commit_locked(func_or_using, DEFAULT_DB_ALIAS)
     return lambda func: inner_commit_locked(func, func_or_using)
+
+class AncestorKey(object):
+    def __init__(self, key):
+        self.key = key
+
+def as_ancestor(key_or_model):
+    if key_or_model is None:
+        raise ValueError("key_or_model must not be None")
+
+    if isinstance(key_or_model, models.Model):
+        key_or_model = Key.from_path(key_or_model._meta.db_table, key_or_model.pk)
+
+    return AncestorKey(key_or_model)
+
+def make_key(*args, **kwargs):
+    parent = kwargs.pop('parent', None)
+
+    if kwargs:
+        raise AssertionError('Excess keyword arguments; received %s' % kwargs)
+
+    if not args or len(args) % 2:
+        raise AssertionError('A non-zero even number of positional arguments is required; received %s' % args)
+
+    if isinstance(parent, models.Model):
+        parent = Key.from_path(parent._meta.db_table, parent.pk)
+
+    converted_args = []
+    for i in xrange(0, len(args), 2):
+        model, id_or_name = args[i:i+2]
+        converted_args.extend((model._meta.db_table, id_or_name))
+
+    return Key.from_path(*converted_args, parent=parent)
