@@ -157,7 +157,7 @@ class GAEQuery(NonrelQuery):
         if self.included_pks is not None:
             keys = [key for key in self.included_pks if key is not None]
         else:
-            keys = self.fetch(None, None)
+            keys = [key_dict[self.query.get_meta().pk.column] for key_dict in self.fetch(None, None)]
         if keys:
             Delete(keys)
 
